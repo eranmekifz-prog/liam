@@ -13,6 +13,15 @@ button{font:inherit;cursor:pointer;border:0}
 .eyebrow{color:var(--lime);font-size:12px;font-weight:900;letter-spacing:4px}.logo{font-size:clamp(48px,10vw,88px);font-weight:1000;line-height:.95;letter-spacing:-5px;margin:14px 0}.logo span{color:var(--lime)}.sub{color:#a9b7c6;max-width:560px;line-height:1.6;margin-bottom:30px}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mode{min-height:145px;text-align:left;border:1px solid #ffffff20;border-radius:17px;padding:20px;background:#ffffff08;color:white;transition:.2s}.mode:hover{transform:translateY(-3px);border-color:var(--lime);background:#c7ff5410}.mode strong{display:block;font-size:21px;margin:12px 0 5px}.mode small{color:#9eacbb;line-height:1.45}.mode .emoji{font-size:28px}
 .hint{font-size:12px;color:#758597;margin-top:24px;line-height:1.7}
+#duelLobby{position:fixed;inset:0;z-index:8;display:none;place-items:center;padding:20px;overflow:auto;background:linear-gradient(135deg,#070b10d9,#0d1824e8),url('image_2eca853c.jpg') center/cover}
+.lobby-card{width:min(980px,100%);padding:clamp(20px,4vw,38px);border:1px solid #ffffff25;border-radius:24px;background:#0c1522ed;box-shadow:0 25px 90px #000b}
+.lobby-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}.lobby-title{font-size:clamp(28px,5vw,42px);font-weight:1000;margin:5px 0}.lobby-sub{color:#9eacbb;margin:0}
+.lobby-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.lobby-panel{background:#ffffff08;border:1px solid #ffffff18;border-radius:16px;padding:18px}.lobby-panel h3{margin:0 0 14px;font-size:16px;letter-spacing:1px}
+.choice-row{display:flex;flex-wrap:wrap;gap:9px}.choice{padding:12px 15px;border:1px solid #ffffff25;border-radius:11px;background:#152231;color:#eaf0f6;font-weight:800}.choice.active{border-color:var(--lime);background:#c7ff5418;color:var(--lime)}
+.weapon-card{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid #ffffff20;border-radius:12px;background:#101c2a;margin-top:9px;cursor:pointer}.weapon-card.active{border-color:var(--lime);background:#c7ff5412}.weapon-icon{font-size:28px}.weapon-card small{display:block;color:#91a2b5;margin-top:3px}
+.invite-row{display:flex;gap:8px;margin-top:12px}.invite-row input{min-width:0;flex:1;background:#080f18;border:1px solid #ffffff25;border-radius:10px;padding:12px;color:white}
+.lobby-note{font-size:12px;color:#9aaabd;line-height:1.55;margin-top:16px}.lobby-actions{display:flex;gap:10px;margin-top:18px}.lobby-actions button{flex:1}
+@media(max-width:650px){.lobby-grid{grid-template-columns:1fr}.lobby-head{align-items:flex-start}.lobby-actions{flex-direction:column}.invite-row{flex-direction:column}}
 #game{position:fixed;inset:0;display:none}canvas{display:block;width:100%;height:100%;cursor:crosshair}
 .hud{position:absolute;inset:0;pointer-events:none;padding:18px;display:flex;justify-content:space-between;align-items:flex-start}
 .hudbox{background:#0a111bd9;border:1px solid #ffffff1a;border-radius:13px;padding:11px 15px;backdrop-filter:blur(8px);min-width:130px}
@@ -33,9 +42,35 @@ button{font:inherit;cursor:pointer;border:0}
 <p class="sub">Enter the arena. Grab your weapon, outplay your opponents and prove you belong at the top. Choose your battle mode.</p>
 <div class="modes">
 <button class="mode" onclick="startGame('br')"><span class="emoji">☄️</span><strong>BATTLE ROYALE</strong><small>Survive the arena. Fight bots, collect ammo and stay inside the shrinking safe zone.</small></button>
-<button class="mode" onclick="startGame('duel')"><span class="emoji">⚔️</span><strong>DUELS</strong><small>One opponent. One arena. No excuses. Be faster and land your shots.</small></button>
+<button class="mode" onclick="openDuelLobby()"><span class="emoji">⚔️</span><strong>DUELS</strong><small>Open your equipment lobby, invite friends to 1v1 or team battles.</small></button>
 </div>
 <div class="hint">WASD / ARROWS — MOVE &nbsp; • &nbsp; MOUSE — AIM &nbsp; • &nbsp; CLICK / SPACE — SHOOT<br>R — RESTART &nbsp; • &nbsp; ESC — MENU</div>
+</div></div>
+</div></div>
+<div id="duelLobby"><div class="lobby-card">
+  <div class="lobby-head"><div><div class="eyebrow">LIAM ARENA • DUEL HQ</div><div class="lobby-title">DUEL LOBBY</div><p class="lobby-sub">Choose your gear, pick a battle and invite your squad.</p></div><button class="hudbutton" onclick="closeDuelLobby()">✕ BACK</button></div>
+  <div class="lobby-grid">
+    <section class="lobby-panel"><h3>YOUR LOADOUT</h3>
+      <div class="weapon-card active" data-weapon="rifle" onclick="selectWeapon('rifle',this)"><span class="weapon-icon">🔫</span><span><b>ASSAULT RIFLE</b><small>Balanced • fast fire • all-rounder</small></span></div>
+      <div class="weapon-card" data-weapon="shotgun" onclick="selectWeapon('shotgun',this)"><span class="weapon-icon">💥</span><span><b>SHOTGUN</b><small>Heavy close-range damage</small></span></div>
+      <div class="weapon-card" data-weapon="sniper" onclick="selectWeapon('sniper',this)"><span class="weapon-icon">🎯</span><span><b>SNIPER</b><small>Precision • powerful single shots</small></span></div>
+      <p class="lobby-note" id="weaponInfo">Selected: Assault Rifle</p>
+    </section>
+    <section class="lobby-panel"><h3>CHOOSE YOUR BATTLE</h3>
+      <div class="choice-row" id="battleChoices">
+        <button class="choice active" onclick="selectBattle('1v1',this)">1 VS 1</button>
+        <button class="choice" onclick="selectBattle('2v2',this)">2 VS 2</button>
+        <button class="choice" onclick="selectBattle('3v3',this)">3 VS 3</button>
+        <button class="choice" onclick="selectBattle('4v4',this)">4 VS 4</button>
+      </div>
+      <h3 style="margin-top:22px">INVITE FRIENDS</h3>
+      <p class="lobby-note" style="margin:0">Create an invitation and send it to your friends.</p>
+      <div class="invite-row"><input id="friendName" placeholder="Friend's name (optional)" maxlength="24"><button class="choice active" onclick="inviteFriend()">INVITE ↗</button></div>
+      <p class="lobby-note" id="inviteStatus">No invitations sent yet.</p>
+    </section>
+  </div>
+  <p class="lobby-note">Note: This lobby currently prepares the match and creates shareable invitations. Live online play with friends needs a multiplayer server, which is not connected yet.</p>
+  <div class="lobby-actions"><button class="primary" onclick="startPracticeDuel()">PRACTICE VS BOT</button><button class="hudbutton" onclick="inviteFriend()">COPY INVITE LINK</button></div>
 </div></div>
 <div id="game"><canvas id="arena"></canvas>
 <div class="hud"><div class="stats">
@@ -50,9 +85,17 @@ button{font:inherit;cursor:pointer;border:0}
 <script>
 const canvas=document.getElementById('arena'),ctx=canvas.getContext('2d');
 let W=0,H=0,player,bots=[],bullets=[],loot=[],keys={},mouse={x:0,y:0,down:false},mode='br',running=false,kills=0,ammo=24,zone,frame=0,lastShot=0,raf;
+let selectedWeapon='rifle',selectedBattle='1v1',inviteRoom='';
 const rand=(a,b)=>Math.random()*(b-a)+a,dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function resize(){W=canvas.width=innerWidth*devicePixelRatio;H=canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=innerWidth;H=innerHeight;if(player){player.x=Math.min(W-30,Math.max(30,player.x));player.y=Math.min(H-30,Math.max(30,player.y));}}
 addEventListener('resize',resize);resize();
+function openDuelLobby(){document.getElementById('menu').style.display='none';document.getElementById('duelLobby').style.display='grid';}
+function closeDuelLobby(){document.getElementById('duelLobby').style.display='none';document.getElementById('menu').style.display='grid';}
+function selectWeapon(w,el){selectedWeapon=w;document.querySelectorAll('.weapon-card').forEach(x=>x.classList.remove('active'));el.classList.add('active');const labels={rifle:'Assault Rifle — balanced fire rate and damage',shotgun:'Shotgun — heavy close-range damage',sniper:'Sniper — precision and powerful shots'};document.getElementById('weaponInfo').textContent='Selected: '+labels[w];}
+function selectBattle(b,el){selectedBattle=b;document.querySelectorAll('#battleChoices .choice').forEach(x=>x.classList.remove('active'));el.classList.add('active');}
+function makeInvite(){if(!inviteRoom)inviteRoom=Math.random().toString(36).slice(2,8).toUpperCase();return location.href.split('?')[0]+'?room='+inviteRoom+'&mode='+selectedBattle;}
+async function inviteFriend(){const url=makeInvite(),name=document.getElementById('friendName').value.trim();const msg=(name?name+', ':'')+'Join my LIAM ARENA '+selectedBattle+' match! Room: '+inviteRoom+' — '+url;try{if(navigator.share)await navigator.share({title:'LIAM ARENA invite',text:msg,url});else if(navigator.clipboard){await navigator.clipboard.writeText(msg);document.getElementById('inviteStatus').textContent='Invite copied! Room code: '+inviteRoom;}else{document.getElementById('inviteStatus').textContent='Room code: '+inviteRoom+' • '+url;}}catch(e){document.getElementById('inviteStatus').textContent='Room code: '+inviteRoom+' • '+url;} }
+function startPracticeDuel(){document.getElementById('duelLobby').style.display='none';startGame('duel');}
 function startGame(m){mode=m;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';document.getElementById('result').style.display='none';resetGame();running=true;cancelAnimationFrame(raf);loop()}
 function resetGame(){kills=0;ammo=24;frame=0;bullets=[];loot=[];player={x:W/2,y:H/2,r:13,hp:100,speed:3.1,angle:0,fire:0,alive:true};let count=mode==='br'?11:1;bots=Array.from({length:count},(_,i)=>({x:rand(45,W-45),y:rand(45,H-45),r:12,hp:mode==='duel'?130:75,speed:rand(1.15,1.65),angle:0,fire:rand(25,100),alive:true,ai:rand(0,6.28),color:['#ff6262','#ffad4d','#bc83ff','#53d7d0'][i%4]}));zone={x:W/2,y:H/2,r:Math.min(W,H)*.47};updateHud();document.getElementById('modeName').textContent=mode==='br'?'BATTLE ROYALE':'DUELS';document.getElementById('centerMsg').textContent=mode==='br'?'BE THE LAST ONE STANDING':'DEFEAT YOUR OPPONENT'}
 function updateHud(){document.getElementById('healthText').textContent=Math.max(0,Math.ceil(player.hp));document.getElementById('healthFill').style.width=Math.max(0,player.hp)+'%';document.getElementById('ammo').textContent=ammo;document.getElementById('kills').textContent=kills}

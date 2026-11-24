@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>LIAM ARENA — Battle Royale & Duels</title>
+<style>
+:root{--lime:#c7ff54;--bg:#090d13;--panel:#111a24;--muted:#8b9aaa}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#f4f7fb;font-family:Inter,ui-sans-serif,system-ui,Arial}
+body{background:radial-gradient(ellipse at 50% 40%,#182433 0%,#090d13 70%)}
+button{font:inherit;cursor:pointer;border:0}
+#menu{position:fixed;inset:0;z-index:5;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#070b10eF,#0d1824eF)}
+.menu-card{width:min(880px,100%);border:1px solid #ffffff1a;border-radius:26px;background:linear-gradient(145deg,#172331f5,#0d141df5);padding:clamp(24px,5vw,54px);box-shadow:0 30px 100px #0009}
+.eyebrow{color:var(--lime);font-size:12px;font-weight:900;letter-spacing:4px}.logo{font-size:clamp(48px,10vw,88px);font-weight:1000;line-height:.95;letter-spacing:-5px;margin:14px 0}.logo span{color:var(--lime)}.sub{color:#a9b7c6;max-width:560px;line-height:1.6;margin-bottom:30px}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mode{min-height:145px;text-align:left;border:1px solid #ffffff20;border-radius:17px;padding:20px;background:#ffffff08;color:white;transition:.2s}.mode:hover{transform:translateY(-3px);border-color:var(--lime);background:#c7ff5410}.mode strong{display:block;font-size:21px;margin:12px 0 5px}.mode small{color:#9eacbb;line-height:1.45}.mode .emoji{font-size:28px}
+.hint{font-size:12px;color:#758597;margin-top:24px;line-height:1.7}
+#game{position:fixed;inset:0;display:none}canvas{display:block;width:100%;height:100%;cursor:crosshair}
+.hud{position:absolute;inset:0;pointer-events:none;padding:18px;display:flex;justify-content:space-between;align-items:flex-start}
+.hudbox{background:#0a111bd9;border:1px solid #ffffff1a;border-radius:13px;padding:11px 15px;backdrop-filter:blur(8px);min-width:130px}
+.label{font-size:10px;letter-spacing:2px;color:#94a5b7;font-weight:800}.value{font-size:21px;font-weight:900;margin-top:3px}.lime{color:var(--lime)}
+.stats{display:flex;gap:9px}.healthbar{height:6px;width:120px;background:#34404c;border-radius:10px;margin-top:8px;overflow:hidden}.healthfill{height:100%;background:var(--lime);width:100%;transition:width .2s}
+#topright{display:flex;gap:8px}.hudbutton{pointer-events:auto;color:#fff;background:#111c29dd;border:1px solid #ffffff24;border-radius:10px;padding:10px 13px;font-weight:800}
+#centerMsg{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-size:13px;letter-spacing:2px;font-weight:900;color:#dbe7f3;text-shadow:0 2px 12px #000;white-space:nowrap}
+#mobile{position:absolute;inset:auto 0 20px;display:none;justify-content:space-between;padding:0 20px;pointer-events:none}
+.pad{pointer-events:auto;display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:4px}.pad button,.fire{background:#152333bb;color:white;border:1px solid #ffffff44;border-radius:12px;font-weight:900;touch-action:none}.pad button{font-size:18px}.fire{pointer-events:auto;width:76px;height:76px;border-radius:50%;align-self:end;background:#c7ff54;color:#10170a;font-weight:1000}
+#result{position:absolute;inset:0;display:none;place-items:center;background:#05090bc9;backdrop-filter:blur(7px);pointer-events:auto}
+.result-card{text-align:center;background:#121d29;border:1px solid #ffffff22;border-radius:22px;padding:35px;width:min(390px,90vw)}.result-card h2{font-size:38px;margin:8px 0}.result-card p{color:#9eacbb}.primary{background:var(--lime);color:#10170a;padding:14px 24px;border-radius:10px;font-weight:1000;margin-top:14px;width:100%}
+@media(max-width:600px){.modes{grid-template-columns:1fr}.mode{min-height:110px;padding:14px}.logo{letter-spacing:-3px}.sub{margin-bottom:18px}.menu-card{padding:25px}.hud{padding:10px}.hudbox{padding:8px 10px;min-width:95px}.value{font-size:17px}.healthbar{width:90px}#mobile{display:flex}}
+</style>
+</head>
+<body>
+<div id="menu"><div class="menu-card">
+<div class="eyebrow">ONLINE ARENA • SEASON 01</div><div class="logo">LIAM<span>.</span><br>ARENA</div>
+<p class="sub">Enter the arena. Grab your weapon, outplay your opponents and prove you belong at the top. Choose your battle mode.</p>
+<div class="modes">
+<button class="mode" onclick="startGame('br')"><span class="emoji">☄️</span><strong>BATTLE ROYALE</strong><small>Survive the arena. Fight bots, collect ammo and stay inside the shrinking safe zone.</small></button>
+<button class="mode" onclick="startGame('duel')"><span class="emoji">⚔️</span><strong>DUELS</strong><small>One opponent. One arena. No excuses. Be faster and land your shots.</small></button>
+</div>
+<div class="hint">WASD / ARROWS — MOVE &nbsp; • &nbsp; MOUSE — AIM &nbsp; • &nbsp; CLICK / SPACE — SHOOT<br>R — RESTART &nbsp; • &nbsp; ESC — MENU</div>
+</div></div>
+<div id="game"><canvas id="arena"></canvas>
+<div class="hud"><div class="stats">
+<div class="hudbox"><div class="label">HEALTH</div><div class="value" id="healthText">100</div><div class="healthbar"><div class="healthfill" id="healthFill"></div></div></div>
+<div class="hudbox"><div class="label">AMMO</div><div class="value"><span class="lime" id="ammo">24</span> <span style="font-size:13px;color:#8b9aaa">/ ∞</span></div></div>
+<div class="hudbox"><div class="label">ELIMINATIONS</div><div class="value" id="kills">0</div></div></div>
+<div id="topright"><div class="hudbox"><div class="label">MODE</div><div class="value" id="modeName">BATTLE ROYALE</div></div><button class="hudbutton" onclick="toMenu()">MENU ✕</button></div></div>
+<div id="centerMsg">FIGHT TO SURVIVE</div>
+<div id="mobile"><div class="pad"><span></span><button data-key="w">▲</button><span></span><button data-key="a">◀</button><button data-key="s">▼</button><button data-key="d">▶</button></div><button class="fire" id="fireBtn">FIRE</button></div>
+<div id="result"><div class="result-card"><div class="eyebrow">MATCH COMPLETE</div><h2 id="resultTitle">VICTORY</h2><p id="resultText">You dominated the arena.</p><button class="primary" onclick="restart()">PLAY AGAIN</button><button class="hudbutton" style="width:100%;margin-top:9px" onclick="toMenu()">MAIN MENU</button></div></div>
+</div>
+<script>
+const canvas=document.getElementById('arena'),ctx=canvas.getContext('2d');
+let W=0,H=0,player,bots=[],bullets=[],loot=[],keys={},mouse={x:0,y:0,down:false},mode='br',running=false,kills=0,ammo=24,zone,frame=0,lastShot=0,raf;
+const rand=(a,b)=>Math.random()*(b-a)+a,dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function resize(){W=canvas.width=innerWidth*devicePixelRatio;H=canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);W=innerWidth;H=innerHeight;if(player){player.x=Math.min(W-30,Math.max(30,player.x));player.y=Math.min(H-30,Math.max(30,player.y));}}
+addEventListener('resize',resize);resize();
+function startGame(m){mode=m;document.getElementById('menu').style.display='none';document.getElementById('game').style.display='block';document.getElementById('result').style.display='none';resetGame();running=true;cancelAnimationFrame(raf);loop()}
+function resetGame(){kills=0;ammo=24;frame=0;bullets=[];loot=[];player={x:W/2,y:H/2,r:13,hp:100,speed:3.1,angle:0,fire:0,alive:true};let count=mode==='br'?11:1;bots=Array.from({length:count},(_,i)=>({x:rand(45,W-45),y:rand(45,H-45),r:12,hp:mode==='duel'?130:75,speed:rand(1.15,1.65),angle:0,fire:rand(25,100),alive:true,ai:rand(0,6.28),color:['#ff6262','#ffad4d','#bc83ff','#53d7d0'][i%4]}));zone={x:W/2,y:H/2,r:Math.min(W,H)*.47};updateHud();document.getElementById('modeName').textContent=mode==='br'?'BATTLE ROYALE':'DUELS';document.getElementById('centerMsg').textContent=mode==='br'?'BE THE LAST ONE STANDING':'DEFEAT YOUR OPPONENT'}
+function updateHud(){document.getElementById('healthText').textContent=Math.max(0,Math.ceil(player.hp));document.getElementById('healthFill').style.width=Math.max(0,player.hp)+'%';document.getElementById('ammo').textContent=ammo;document.getElementById('kills').textContent=kills}
+function shoot(who,angle,enemy=false){if(who===player){if(ammo<=0)return;ammo--;}bullets.push({x:who.x+Math.cos(angle)*17,y:who.y+Math.sin(angle)*17,vx:Math.cos(angle)*8.8,vy:Math.sin(angle)*8.8,life:70,owner:who,enemy});}
+function move(p,dx,dy){let l=Math.hypot(dx,dy)||1;p.x=Math.max(18,Math.min(W-18,p.x+dx/l*p.speed));p.y=Math.max(18,Math.min(H-18,p.y+dy/l*p.speed))}
+function loop(){if(!running)return;frame++;ctx.clearRect(0,0,W,H);drawWorld();
+let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);move(player,dx,dy);
+player.angle=Math.atan2(mouse.y-player.y,mouse.x-player.x);if(mouse.down||keys[' ']){if(frame-lastShot>11){shoot(player,player.angle);lastShot=frame;updateHud()}}
+if(mode==='br'&&frame%100===0)zone.r=Math.max(95,zone.r-12);
+bots.forEach(b=>{if(!b.alive)return;let d=dist(b,player),ang=Math.atan2(player.y-b.y,player.x-b.x);b.angle=ang;b.ai+=rand(-.07,.07);let toward=d>180?1:d<100?-.6:0;move(b,Math.cos(ang)*toward+Math.cos(b.ai)*.7,Math.sin(ang)*toward+Math.sin(b.ai)*.7);b.fire--;if(b.fire<=0&&d<460){shoot(b,ang,true);b.fire=rand(48,90)}if(mode==='br'&&Math.hypot(b.x-zone.x,b.y-zone.y)>zone.r){b.hp-=.12}}});
+bullets=bullets.filter(q=>{q.x+=q.vx;q.y+=q.vy;q.life--;let target=q.owner===player?bots.find(b=>b.alive&&Math.hypot(b.x-q.x,b.y-q.y)<b.r+4):(player.alive&&Math.hypot(player.x-q.x,player.y-q.y)<player.r+4?player:null);if(target){target.hp-=q.owner===player?24:8;if(target.hp<=0&&target.alive){target.alive=false;if(target===player){endGame(false)}else if(q.owner===player){kills++;loot.push({x:target.x,y:target.y,r:8});updateHud()}}return false}return q.life>0&&q.x>0&&q.x<W&&q.y>0&&q.y<H});
+loot=loot.filter(l=>{if(dist(l,player)<24){ammo+=12;updateHud();return false}return true});
+if(mode==='br'&&Math.hypot(player.x-zone.x,player.y-zone.y)>zone.r){player.hp-=.16;if(frame%30===0)updateHud()}
+drawZone();drawLoot();bots.forEach(drawFighter);drawFighter(player,true);drawBullets();
+if(player.hp<=0)endGame(false);else if(bots.every(b=>!b.alive))endGame(true);
+if(frame%30===0)updateHud();raf=requestAnimationFrame(loop)}
+function drawWorld(){ctx.fillStyle='#101a25';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#ffffff0a';ctx.lineWidth=1;for(let x=0;x<W;x+=42){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=42){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}for(let i=0;i<12;i++){let x=(i*173+80)%W,y=(i*239+110)%H;ctx.fillStyle='#243344';ctx.fillRect(x,y,34,34);ctx.strokeStyle='#52677a55';ctx.strokeRect(x,y,34,34)}}
+function drawZone(){if(mode!=='br')return;ctx.save();ctx.fillStyle='#ff44551a';ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='destination-out';ctx.beginPath();ctx.arc(zone.x,zone.y,zone.r,0,Math.PI*2);ctx.fill();ctx.restore();ctx.beginPath();ctx.arc(zone.x,zone.y,zone.r,0,Math.PI*2);ctx.strokeStyle='#c7ff54';ctx.lineWidth=3;ctx.setLineDash([10,9]);ctx.stroke();ctx.setLineDash([])}
+function drawFighter(p,isPlayer=false){if(!p.alive)return;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.fillStyle='#080c12';ctx.fillRect(1,-4,23,8);ctx.fillStyle=isPlayer?'#c7ff54':p.color;ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#101820';ctx.beginPath();ctx.arc(4,-4,3,0,Math.PI*2);ctx.fill();ctx.restore();if(!isPlayer){ctx.fillStyle='#0009';ctx.fillRect(p.x-15,p.y-22,30,4);ctx.fillStyle='#ff6464';ctx.fillRect(p.x-15,p.y-22,30*Math.max(0,p.hp)/(mode==='duel'?130:75),4)}}
+function drawBullets(){bullets.forEach(b=>{ctx.fillStyle=b.owner===player?'#eaffad':'#ffb1a0';ctx.beginPath();ctx.arc(b.x,b.y,3,0,Math.PI*2);ctx.fill()})}
+function drawLoot(){loot.forEach(l=>{ctx.fillStyle='#c7ff54';ctx.beginPath();ctx.arc(l.x,l.y,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#10170a';ctx.font='bold 10px Arial';ctx.fillText('+',l.x-3,l.y+4)})}
+function endGame(win){if(!running)return;running=false;document.getElementById('result').style.display='grid';document.getElementById('resultTitle').textContent=win?'VICTORY':'ELIMINATED';document.getElementById('resultTitle').style.color=win?'#c7ff54':'#ff6262';document.getElementById('resultText').textContent=win?'You own this arena. Eliminations: '+kills:'Good fight. Eliminations: '+kills+'. Jump back in and try again.'}
+function restart(){startGame(mode)}function toMenu(){running=false;cancelAnimationFrame(raf);document.getElementById('game').style.display='none';document.getElementById('menu').style.display='grid'}
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='r'&&document.getElementById('game').style.display==='block')restart();if(e.key==='Escape')toMenu()});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+canvas.addEventListener('mousemove',e=>{let r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top});
+canvas.addEventListener('mousedown',()=>mouse.down=true);addEventListener('mouseup',()=>mouse.down=false);
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+document.getElementById('fireBtn').addEventListener('pointerdown',e=>{e.preventDefault();mouse.down=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>document.getElementById('fireBtn').addEventListener(ev,()=>mouse.down=false));
+</script></body></html>
